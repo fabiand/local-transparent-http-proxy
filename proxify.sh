@@ -10,11 +10,19 @@ systemctl start squid
 
 SQUIDID=$(id -u squid)
 
-filter="iptables -t filter"
-nat="iptables -t nat"
+#filter="iptables -t filter"
+#nat="iptables -t nat"
 
-$nat -I OUTPUT -p tcp --dport 80 -j REDIRECT --to-port 3129
-$nat -I OUTPUT -m owner --uid-owner $SQUIDID -j ACCEPT
+fwl="firewall-cmd --direct --${WAY:-add}-rule"
 
-$filter -I OUTPUT -p tcp --dport 443 -j REJECT
-$filter -I OUTPUT -m owner --uid-owner $SQUIDID -j ACCEPT
+for INET in ipv4 ipv6;
+do
+for CHAIN in OUTPUT;
+do
+  $fwl $INET nat $CHAIN 0 -m owner --uid-owner $SQUIDID -j ACCEPT
+  $fwl $INET nat $CHAIN 1 -p tcp --dport 80 -j REDIRECT --to-port 3129
+
+  $fwl $INET filter $CHAIN 0 -m owner --uid-owner $SQUIDID -j ACCEPT
+  $fwl $INET filter $CHAIN 1 -p tcp --dport 443 -j REJECT
+done
+done
