@@ -5,6 +5,9 @@ pkcon install -y squid
 
 sed "/^http_port/ a http_port 3129 intercept \nmaximum_object_size 2 GB " /etc/squid/squid.conf
 
+systemctl enable squid
+systemctl start squid
+
 SQUIDID=$(id -u squid)
 
 filter="iptables -t filter"
